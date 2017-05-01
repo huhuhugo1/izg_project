@@ -52,7 +52,7 @@ void const* gpu_computeVertexAttributeDataPointer(
   //(void)head;
   //(void)gl_VertexID;
   //return NULL;
-  return head->buffer + gl_VertexID * head->stride + head->offset;
+  return (void*)(head->buffer + gl_VertexID * head->stride + head->offset);
 }
 
 void gpu_runVertexPuller(
@@ -73,7 +73,7 @@ void gpu_runVertexPuller(
   //(void)output;
   //(void)puller;
   //(void)vertexShaderInvocation;
-  for (int i = 0; i < MAX_ATTRIBUTES; i++)
+  for (size_t i = 0; i < MAX_ATTRIBUTES; i++)
     if (puller->heads[i].enabled)
       output->attributes[i] = gpu_computeVertexAttributeDataPointer(&(puller->heads[i]), gpu_computeGLVertexID(puller->indices, vertexShaderInvocation));
     else
@@ -114,12 +114,12 @@ void gpu_runPrimitiveAssembly(
   
   GPUVertexShaderInput input;
 
-  for (int i = 0; i < nofPrimitiveVertices; i++) {
-    gpu_runVertexPuller(input.attributes, puller, baseVertexShaderInvocation);
-    input.gl_VertexID = gpu_computeGLVertexID(puller->indices, baseVertexShaderInvocation);
-    VertexShader(primitive->vertices, input);
+  for (size_t i = 0; i < nofPrimitiveVertices; i++) {
+    gpu_runVertexPuller(input.attributes, puller, baseVertexShaderInvocation + i);
+    input.gl_VertexID = gpu_computeGLVertexID(puller->indices, baseVertexShaderInvocation + i);
+    (*vertexShader)(&primitive->vertices[i], &input, gpu);
   }
-
+  primitive->nofUsedVertices = nofPrimitiveVertices;
 }
 
 /// @}
@@ -676,6 +676,27 @@ void gpu_computeScreenSpaceBarycentrics(
   (void)pixelCenter;
   (void)vertices;
   (void)lines;
+
+    Vec2 v0;
+    v0.data[0] = vertices[1].data[0] - vertices[0].data[0];
+    v0.data[1] = vertices[1].data[1] - vertices[0].data[1];
+    Vec2 v1;
+    v1.data[0] = vertices[2].data[0] - vertices[0].data[0];
+    v1.data[1] = vertices[2].data[1] - vertices[0].data[1];
+    Vec2 v2;
+    v2.data[0] = pixelCenter->data[0] - vertices[0].data[0];
+    v2.data[1] = pixelCenter->data[1] - vertices[0].data[1];
+
+    float d00 = dot_Vec2(&v0, &v0);
+    float d01 = dot_Vec2(&v0, &v1);
+    float d11 = dot_Vec2(&v1, &v1);
+    float d20 = dot_Vec2(&v2, &v0);
+    float d21 = dot_Vec2(&v2, &v1);
+
+    float denom = d00 * d11 - d01 * d01;
+    coords->data[1] = (d11 * d20 - d01 * d21) / denom;
+    coords->data[2] = (d00 * d21 - d01 * d20) / denom;
+    coords->data[0] = 1.0f - coords->data[1] - coords->data[2];
 }
 
 /// @}
