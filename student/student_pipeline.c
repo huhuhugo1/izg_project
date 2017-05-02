@@ -112,10 +112,11 @@ void gpu_runPrimitiveAssembly(
   ///  - GPUVertexPullerOutput()
   ///  - GPUVertexShaderInput()
   
-  GPUVertexShaderInput input;
-
   for (size_t i = 0; i < nofPrimitiveVertices; i++) {
-    gpu_runVertexPuller(input.attributes, puller, baseVertexShaderInvocation + i);
+    GPUVertexShaderInput input;
+    GPUVertexShaderOutput output;
+    gpu_runVertexPuller(&output, puller, baseVertexShaderInvocation + i);
+    input.attributes = &output;
     input.gl_VertexID = gpu_computeGLVertexID(puller->indices, baseVertexShaderInvocation + i);
     (*vertexShader)(&primitive->vertices[i], &input, gpu);
   }

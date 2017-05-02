@@ -38,6 +38,12 @@ struct PhongVariables{
   ///This variable contains light poistion in world-space.
   Vec3 lightPosition;
 
+  //
+  ProgramID program;
+  BufferID vertices;
+  BufferID indices;
+  VertexPullerID puller;
+
 
 }phong;///<instance of all global variables for triangle example.
 
@@ -84,6 +90,33 @@ void phong_onInit(int32_t width,int32_t height){
   ///  - cpu_enableVertexPullerHead()
   ///  - cpu_setIndexing()
 
+  cpu_reserveUniform(phong.gpu, "projectionMatrix", UNIFORM_MAT4);
+  cpu_reserveUniform(phong.gpu, "viewMatrix", UNIFORM_MAT4);
+  cpu_reserveUniform(phong.gpu, "cameraPosition", UNIFORM_VEC3);
+  cpu_reserveUniform(phong.gpu, "lightPosition", UNIFORM_VEC3);
+
+  phong.program = cpu_createProgram(phong.gpu);
+
+  cpu_attachVertexShader(phong.gpu, phong.program, phong_vertexShader);
+  cpu_attachFragmentShader(phong.gpu, phong.program, phong_fragmentShader);
+
+  cpu_setAttributeInterpolation(phong.gpu, phong.program, 0, ATTRIB_VEC3, SMOOTH);
+  cpu_setAttributeInterpolation(phong.gpu, phong.program, 1, ATTRIB_VEC3, SMOOTH);
+
+  cpu_createBuffers(phong.gpu, 1, &phong.vertices);
+  cpu_bufferData(phong.gpu, phong.vertices, sizeof(bunnyVertices), bunnyVertices);
+  
+  cpu_createBuffers(phong.gpu, 1, &phong.indices);
+  cpu_bufferData(phong.gpu, phong.indices, sizeof(bunnyIndices), bunnyIndices);
+  
+  cpu_createVertexPullers(phong.gpu, 1, &phong.puller);
+  cpu_setVertexPullerHead(phong.gpu, phong.puller, 0, phong.indices, sizeof(float) * 0, sizeof(float) * 6);
+  cpu_setVertexPullerHead(phong.gpu, phong.puller, 1, phong.indices, sizeof(float) * 3, sizeof(float) * 6);
+
+  cpu_enableVertexPullerHead(phong.gpu, phong.puller, 0);
+  cpu_enableVertexPullerHead(phong.gpu, phong.puller, 1);
+
+  cpu_setIndexing(phong.gpu, phong.puller, phong.indices, 4);
 }
 
 /// @}
@@ -117,7 +150,23 @@ void phong_onDraw(SDL_Surface*surface){
   ///  - cpu_drawTriangles()
   ///  - getUniformLocation()
 
-
+  cpu_useProgram(phong.gpu, phong.program);
+  cpu_bindVertexPuller(phong.gpu, phong.puller);
+  
+  UniformLocation const viewMatrixUniform = getUniformLocation(phong.gpu, "viewMatrix");
+  cpu_uniformMatrix4fv(phong.gpu, viewMatrixUniform, (float * ) & viewMatrix);
+  
+  UniformLocation const projectionMatrixUniform = getUniformLocation(phong.gpu, "projectionMatrix");
+  cpu_uniformMatrix4fv(phong.gpu, projectionMatrixUniform, (float * ) & projectionMatrix);
+  
+  UniformLocation const cameraPositionUniform = getUniformLocation(phong.gpu, "cameraPosition");
+  cpu_uniform3f(phong.gpu, cameraPositionUniform, cameraPosition.data[0], cameraPosition.data[1], cameraPosition.data[2]);
+  
+  UniformLocation const lightPositionUniform = getUniformLocation(phong.gpu, "lightPosition");
+  cpu_uniform3f(phong.gpu, lightPositionUniform, phong.lightPosition.data[0], phong.lightPosition.data[1], phong.lightPosition.data[2]);
+  
+  cpu_drawTriangles(phong.gpu, sizeof(bunnyIndices) / sizeof(VertexIndex));
+  
   // copy image from gpu to SDL surface
   cpu_swapBuffers(surface,phong.gpu);
 }
