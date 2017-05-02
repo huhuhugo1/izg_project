@@ -110,13 +110,13 @@ void phong_onInit(int32_t width,int32_t height){
   cpu_bufferData(phong.gpu, phong.indices, sizeof(bunnyIndices), bunnyIndices);
   
   cpu_createVertexPullers(phong.gpu, 1, &phong.puller);
-  cpu_setVertexPullerHead(phong.gpu, phong.puller, 0, phong.indices, sizeof(float) * 0, sizeof(float) * 6);
-  cpu_setVertexPullerHead(phong.gpu, phong.puller, 1, phong.indices, sizeof(float) * 3, sizeof(float) * 6);
+  cpu_setVertexPullerHead(phong.gpu, phong.puller, 0, phong.vertices, sizeof(float) * 0, sizeof(float) * 6);
+  cpu_setVertexPullerHead(phong.gpu, phong.puller, 1, phong.vertices, sizeof(float) * 3, sizeof(float) * 6);
 
   cpu_enableVertexPullerHead(phong.gpu, phong.puller, 0);
   cpu_enableVertexPullerHead(phong.gpu, phong.puller, 1);
 
-  cpu_setIndexing(phong.gpu, phong.puller, phong.indices, 4);
+  cpu_setIndexing(phong.gpu, phong.puller, phong.indices, 2);
 }
 
 /// @}
@@ -165,7 +165,7 @@ void phong_onDraw(SDL_Surface*surface){
   UniformLocation const lightPositionUniform = getUniformLocation(phong.gpu, "lightPosition");
   cpu_uniform3f(phong.gpu, lightPositionUniform, phong.lightPosition.data[0], phong.lightPosition.data[1], phong.lightPosition.data[2]);
   
-  cpu_drawTriangles(phong.gpu, sizeof(bunnyIndices) / sizeof(VertexIndex));
+  cpu_drawTriangles(phong.gpu, 2092*3);
   
   // copy image from gpu to SDL surface
   cpu_swapBuffers(surface,phong.gpu);
