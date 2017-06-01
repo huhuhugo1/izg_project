@@ -128,14 +128,12 @@ void phong_fragmentShader(
   else
     spec = 0.f;
 
-	Vec3 cl_diff, Dvector;
-  init_Vec3(&cl_diff, 0.f, 1.f, 0.f);
-	multiply_Vec3_Float(&Dvector, &cl_diff, lamb);
-
-  Vec3 cl_spec, Svector;
-  init_Vec3(&cl_spec, 1.f, 1.f, 1.f);
-	multiply_Vec3_Float(&Svector, &cl_spec, spec);
-
+	Vec3 Dvector;
+  init_Vec3(&Dvector, 0.f, lamb, 0.f);
+	
+  Vec3 Svector;
+  init_Vec3(&Svector, spec, spec, spec);
+	
   Vec3 Cvector;
 	add_Vec3(&Cvector, &Dvector, &Svector);
 	copy_Vec3Float_To_Vec4(&output->color, &Cvector, 1.f);
