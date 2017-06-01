@@ -1,3 +1,0 @@
-/mnt/hgfs/git/izg1617/build/CMakeFiles/edit_cache.dir
-/mnt/hgfs/git/izg1617/build/CMakeFiles/rebuild_cache.dir
-/mnt/hgfs/git/izg1617/build/CMakeFiles/izgProjekt2016.dir
